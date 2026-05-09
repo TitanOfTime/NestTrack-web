@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { signOut } from "firebase/auth";
+import { signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 const navItems = [
@@ -60,6 +60,19 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // ── Auth Guard ──
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/");
+      } else {
+        setAuthChecked(true);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -67,6 +80,15 @@ export default function DashboardLayout({ children }) {
   };
 
   const isActive = (href) => pathname === href;
+
+  // ── Loading spinner while auth resolves ──
+  if (!authChecked) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#1a1a2e]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">

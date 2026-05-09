@@ -24,11 +24,18 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, []);
 
+  // ── Effective status helper (handles messy backend strings) ──
+  const getEffectiveStatus = (report) => {
+    if (report.status?.toLowerCase().includes("pending")) return "Pending Audit";
+    if (report.status?.toLowerCase().includes("approved")) return "Approved";
+    return report.incidentLoss >= 10000 ? "Pending Audit" : "Approved";
+  };
+
   // ── Computed data ──
   const kpis = computeKPIs(reports);
   const filteredReports =
     filter === "pending"
-      ? reports.filter((r) => r.status === "Pending Audit")
+      ? reports.filter((r) => getEffectiveStatus(r) === "Pending Audit")
       : reports;
 
   // ── Handlers ──
@@ -100,25 +107,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Total Daily Loss */}
         <div className="rounded-xl border border-cyan-500/30 bg-[#0f0f23] p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-400">
-                Total Daily Loss
-              </p>
-              <p className="mt-2 text-3xl font-bold text-emerald-400">
-                {formatCurrency(kpis.totalDailyLoss)} LKR
-              </p>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-                  +26%
-                </span>
-                <span className="text-xs text-gray-500">Since Last Month</span>
-              </div>
-            </div>
-            <div className="rounded-lg bg-cyan-500/10 p-2">
-              <svg className="h-6 w-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="mb-3 rounded-lg bg-cyan-500/10 p-3">
+              <svg className="h-7 w-7 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
               </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-400">
+              Total Daily Loss
+            </p>
+            <p className="mt-2 text-4xl font-bold text-emerald-400">
+              {formatCurrency(kpis.totalDailyLoss)} LKR
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                +26%
+              </span>
+              <span className="text-xs text-gray-500">Since Last Month</span>
             </div>
           </div>
         </div>
@@ -214,7 +219,7 @@ export default function DashboardPage() {
                 <th className="px-6 py-3">SKU</th>
                 <th className="px-6 py-3">Product</th>
                 <th className="px-6 py-3">Zone</th>
-                <th className="px-6 py-3">Cause</th>
+                <th className="px-6 py-3">Description</th>
                 <th className="px-6 py-3">Status</th>
                 <th className="px-6 py-3 text-right">Total Loss</th>
               </tr>
@@ -235,6 +240,7 @@ export default function DashboardPage() {
                     key={report.id}
                     report={report}
                     index={index}
+                    effectiveStatus={getEffectiveStatus(report)}
                     isExpanded={expandedRow === report.id}
                     isDispatching={dispatchingId === report.id}
                     onToggle={() => toggleRow(report.id)}
@@ -256,6 +262,7 @@ export default function DashboardPage() {
 function TableRow({
   report,
   index,
+  effectiveStatus,
   isExpanded,
   isDispatching,
   onToggle,
@@ -263,7 +270,7 @@ function TableRow({
   formatTime,
   formatCurrency,
 }) {
-  const isApproved = report.status === "Approved";
+  const isApproved = effectiveStatus === "Approved";
 
   return (
     <>
@@ -280,12 +287,12 @@ function TableRow({
         </td>
         <td className="px-6 py-4 text-gray-300">{report.sku || "—"}</td>
         <td className="px-6 py-4 font-medium text-white">
-          {report.product || "—"}
+          {report.productName || "—"}
         </td>
-        <td className="px-6 py-4 text-gray-300">{report.zone || "—"}</td>
+        <td className="px-6 py-4 text-gray-300">{report.warehouseZone || "—"}</td>
         <td className="max-w-[200px] truncate px-6 py-4">
           <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-medium text-red-400">
-            {report.cause || "—"}
+            {report.description || "—"}
           </span>
         </td>
         <td className="px-6 py-4">
@@ -324,7 +331,7 @@ function TableRow({
                     {report.imageUrl ? (
                       <img
                         src={report.imageUrl}
-                        alt={`Evidence for ${report.product}`}
+                        alt={`Evidence for ${report.productName}`}
                         className="h-40 w-full rounded-lg object-cover ring-1 ring-white/10"
                       />
                     ) : (
@@ -375,14 +382,14 @@ function TableRow({
                     <div className="rounded-lg bg-white/5 p-4">
                       <p className="text-xs text-gray-500">Product</p>
                       <p className="font-semibold text-white">
-                        {report.product || "—"}
+                        {report.productName || "—"}
                       </p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-white/5 p-4">
                         <p className="text-xs text-gray-500">Zone</p>
                         <p className="font-semibold text-white">
-                          {report.zone || "—"}
+                          {report.warehouseZone || "—"}
                         </p>
                       </div>
                       <div className="rounded-lg bg-white/5 p-4">
@@ -394,16 +401,9 @@ function TableRow({
                     </div>
                   </div>
 
-                  {/* Action Button */}
-                  <div className="mt-4">
-                    {isApproved ? (
-                      <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 py-3 text-sm font-semibold text-emerald-400">
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Dispatched
-                      </div>
-                    ) : (
+                  {/* Action Button — only for Pending items */}
+                  {!isApproved && (
+                    <div className="mt-4">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -426,8 +426,8 @@ function TableRow({
                           </>
                         )}
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
