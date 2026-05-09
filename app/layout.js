@@ -7,7 +7,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "NestTrack — Login",
+  title: "NestTrack",
   description: "NestTrack Warehouse Management Portal",
 };
 
