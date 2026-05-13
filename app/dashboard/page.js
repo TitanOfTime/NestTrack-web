@@ -38,6 +38,25 @@ export default function DashboardPage() {
       ? reports.filter((r) => getEffectiveStatus(r) === "Pending Audit")
       : reports;
 
+  // ── Daily Dispatch Manifest (decoupled from UI tab state) ──
+  const isToday = (timestamp) => {
+    if (!timestamp) return false;
+    const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  };
+
+  const dailyDispatchManifest = reports.filter((r) => {
+    if (!isToday(r.timestamp)) return false;
+    const autoApproved = (r.incidentLoss || 0) < 10000;
+    const manuallyApproved = r.status?.toLowerCase().includes("approved");
+    return autoApproved || manuallyApproved;
+  });
+
   // ── Handlers ──
   const handleDispatch = async (docId) => {
     setDispatchingId(docId);
@@ -169,7 +188,13 @@ export default function DashboardPage() {
 
       {/* ═══════════ EXPORT REPORT ═══════════ */}
       <button
-        onClick={() => generatePDFReport(filteredReports)}
+        onClick={() => {
+          const exportData = dailyDispatchManifest.map((report) => ({
+            ...report,
+            status: getEffectiveStatus(report),
+          }));
+          generatePDFReport(exportData);
+        }}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition-all hover:from-emerald-500 hover:to-emerald-400 hover:shadow-emerald-500/30 md:max-w-md"
       >
         Export Report
