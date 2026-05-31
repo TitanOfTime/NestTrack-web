@@ -19,6 +19,18 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    label: "Reports",
+    href: "/reports",
+    icon: (
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+  },
 ];
 
 const generalItems = [
@@ -55,14 +67,13 @@ const generalItems = [
   },
 ];
 
-export default function DashboardLayout({ children }) {
+export default function ProtectedLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // ── Auth Guard ──
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
@@ -79,12 +90,11 @@ export default function DashboardLayout({ children }) {
     router.push("/");
   };
 
-  const isActive = (href) => pathname === href;
+  const isActive = (href) => pathname === href || pathname.startsWith(href + "/");
 
-  // ── Loading spinner while auth resolves ──
   if (!authChecked) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#1a1a2e]">
+      <div className="flex h-screen items-center justify-center bg-[#0a0a0a]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
       </div>
     );
@@ -92,18 +102,14 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* ── Sidebar ── */}
       <aside
         className={`relative flex flex-col bg-cyan-500 text-white transition-all duration-300 ${
           collapsed ? "w-16" : "w-48"
         }`}
       >
-        {/* Header + Collapse Toggle */}
         <div className="flex items-center justify-between px-4 pt-5 pb-2">
           {!collapsed && (
-            <span className="text-sm font-bold uppercase tracking-wider">
-              Menu
-            </span>
+            <span className="text-sm font-bold uppercase tracking-wider">Menu</span>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -111,15 +117,8 @@ export default function DashboardLayout({ children }) {
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <svg
-              className={`h-5 w-5 transition-transform duration-300 ${
-                collapsed ? "rotate-180" : ""
-              }`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              className={`h-5 w-5 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             >
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
               <line x1="9" y1="3" x2="9" y2="21" />
@@ -128,7 +127,6 @@ export default function DashboardLayout({ children }) {
           </button>
         </div>
 
-        {/* Main Nav */}
         <nav className="mt-2 flex-1 space-y-1 px-2">
           {navItems.map((item) => (
             <Link
@@ -147,12 +145,9 @@ export default function DashboardLayout({ children }) {
           ))}
         </nav>
 
-        {/* General Section */}
         <div className="mt-auto border-t border-cyan-400/40 px-2 pt-3 pb-2">
           {!collapsed && (
-            <span className="mb-2 block px-3 text-xs font-bold uppercase tracking-wider text-cyan-100/70">
-              General
-            </span>
+            <span className="mb-2 block px-3 text-xs font-bold uppercase tracking-wider text-cyan-100/70">General</span>
           )}
           <nav className="space-y-1">
             {generalItems.map((item) => (
@@ -173,50 +168,26 @@ export default function DashboardLayout({ children }) {
           </nav>
         </div>
 
-        {/* Profile Block */}
         <div className="relative border-t border-cyan-400/40 p-3">
           <button
             onClick={() => setShowLogout(!showLogout)}
-            className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-cyan-600 ${
-              collapsed ? "justify-center" : ""
-            }`}
+            className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-cyan-600 ${collapsed ? "justify-center" : ""}`}
           >
-            {/* Avatar */}
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
-              N
-            </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">N</div>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold leading-tight">
-                  Nimal
-                </p>
-                <p className="truncate text-xs text-cyan-100/70">
-                  Warehouse Manager
-                </p>
+                <p className="truncate text-sm font-semibold leading-tight">Nimal</p>
+                <p className="truncate text-xs text-cyan-100/70">Warehouse Manager</p>
               </div>
             )}
           </button>
-
-          {/* Logout Dropdown */}
           {showLogout && (
-            <div
-              className={`absolute bottom-full mb-2 rounded-lg bg-gray-900 shadow-xl ring-1 ring-white/10 ${
-                collapsed ? "left-1/2 -translate-x-1/2" : "left-3 right-3"
-              }`}
-            >
+            <div className={`absolute bottom-full mb-2 rounded-lg bg-gray-900 shadow-xl ring-1 ring-white/10 ${collapsed ? "left-1/2 -translate-x-1/2" : "left-3 right-3"}`}>
               <button
                 onClick={handleLogout}
                 className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-sm text-red-400 transition-colors hover:bg-gray-800 hover:text-red-300"
               >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
@@ -228,8 +199,7 @@ export default function DashboardLayout({ children }) {
         </div>
       </aside>
 
-      {/* ── Main Content ── */}
-      <main className="flex-1 overflow-y-auto bg-[#1a1a2e] p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto bg-[#0a0a0a] p-6 lg:p-8">
         {children}
       </main>
     </div>
